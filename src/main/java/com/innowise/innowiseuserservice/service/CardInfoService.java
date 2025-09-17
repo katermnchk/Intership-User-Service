@@ -1,0 +1,83 @@
+package com.innowise.innowiseuserservice.service;
+
+import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoCreationDto;
+import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoResponseDto;
+import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoUpdateDto;
+import com.innowise.innowiseuserservice.entity.CardInfo;
+import com.innowise.innowiseuserservice.entity.User;
+import com.innowise.innowiseuserservice.exception.CardNotFoundException;
+import com.innowise.innowiseuserservice.exception.DuplicateUserCardException;
+import com.innowise.innowiseuserservice.exception.UserNotFoundException;
+import com.innowise.innowiseuserservice.mapper.CardInfoMapper;
+import com.innowise.innowiseuserservice.mapper.UserMapper;
+import com.innowise.innowiseuserservice.repository.CardInfoRepository;
+import com.innowise.innowiseuserservice.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CardInfoService {
+
+  private final CardInfoRepository cardInfoRepository;
+  private final CardInfoMapper cardInfoMapper;
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
+
+  public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
+    if (cardInfoRepository.existsByUserIdAndNumber(
+        cardInfoCreationDto.getUserId(), cardInfoCreationDto.getNumber())
+    ) {
+      throw new DuplicateUserCardException(cardInfoCreationDto.getNumber());
+    }
+
+    User user = userRepository.findById(cardInfoCreationDto.getUserId())
+        .orElseThrow(() -> new UserNotFoundException(cardInfoCreationDto.getUserId()));
+
+    CardInfo cardInfo = cardInfoMapper.cardInfoDtoToCardInfo(cardInfoCreationDto);
+    cardInfo.setUser(user);
+    cardInfo = cardInfoRepository.save(cardInfo);
+
+    return cardInfoMapper.cardInfoToCardInfoDto(cardInfo);
+  }
+
+  public CardInfoResponseDto getCardById(Long id) {
+    CardInfo cardInfo = cardInfoRepository.findById(id)
+        .orElseThrow(() -> new CardNotFoundException(id));
+
+    return cardInfoMapper.cardInfoToCardInfoDto(cardInfo);
+  }
+
+  public List<CardInfoResponseDto> getCardsByIds(List<Long> ids) {
+    return cardInfoRepository.findAllByIdIn(ids).stream()
+        .map(cardInfoMapper::cardInfoToCardInfoDto)
+        .toList();
+  }
+
+  @Transactional
+  public CardInfoResponseDto updateCard(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
+
+    CardInfo cardInfo = cardInfoRepository.findById(id)
+        .orElseThrow(() -> new CardNotFoundException(id));
+
+    if (cardInfoRepository.existsByUserIdAndNumber(
+       cardInfo.getUser().getId(), cardInfoUpdateDto.getNumber())
+    ) {
+      throw new DuplicateUserCardException(cardInfoUpdateDto.getNumber());
+    }
+
+    cardInfoMapper.updateCardInfoFromCardInfoDto(cardInfoUpdateDto, cardInfo);
+    return cardInfoMapper.cardInfoToCardInfoDto(cardInfoRepository.save(cardInfo));
+  }
+
+  @Transactional
+  public void deleteCardById(Long id) {
+    CardInfo cardInfo = cardInfoRepository.findById(id)
+        .orElseThrow(() -> new CardNotFoundException(id));
+
+    cardInfoRepository.deleteById(id);
+  }
+
+}
