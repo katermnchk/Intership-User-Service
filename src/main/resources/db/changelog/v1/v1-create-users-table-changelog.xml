@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="v1-1" author="ramenchyk-katsiaryna">
+    <createTable tableName="users">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false" />
+      </column>
+      <column name="name" type="varchar(50)">
+        <constraints nullable="false" />
+      </column>
+      <column name="surname" type="varchar(50)">
+        <constraints nullable="false" />
+      </column>
+      <column name="birth_date" type="date" />
+      <column name="email" type="varchar(255)">
+        <constraints nullable="false" unique="true" />
+      </column>
+    </createTable>
+
+    <createIndex tableName="users" indexName="idx_name_surname">
+      <column name="name"/>
+      <column name="surname"/>
+    </createIndex>
+
+    <createIndex tableName="users" indexName="idx_email">
+      <column name="email"/>
+    </createIndex>
+
+    <sql>
+      ALTER TABLE users
+      ADD CONSTRAINT chk_birth_date CHECK (birth_date &lt;= CURRENT_DATE);
+    </sql>
+    <sql>
+      ALTER TABLE users
+      ADD CONSTRAINT chk_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+    </sql>
+
+    <rollback>
+      <dropTable tableName="users" />
+      <sql>
+        ALTER TABLE users
+        DROP CONSTRAINT IF EXISTS chk_birth_date
+      </sql>
+      <sql>
+        ALTER TABLE users
+        DROP CONSTRAINT IF EXISTS chk_email_format
+      </sql>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="v1-2" author="ramenchyk-katsiaryna">
+    <createTable tableName="card_info">
+      <column name="id" type="bigint" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false" />
+      </column>
+      <column name="user_id" type="bigint">
+        <constraints nullable="false"
+          foreignKeyName="fk_cards_users"
+          referencedTableName="users"
+          referencedColumnNames="id"
+        />
+      </column>
+      <column name="number" type="char(16)">
+        <constraints nullable="false" unique="true" />
+      </column>
+      <column name="holder" type="varchar(100)">
+        <constraints nullable="false" />
+      </column>
+      <column name="expiration_date" type="char(5)">
+        <constraints nullable="false" />
+      </column>
+    </createTable>
+
+    <createIndex tableName="card_info" indexName="idx_user_id">
+      <column name="user_id"/>
+    </createIndex>
+
+    <sql>
+      ALTER TABLE card_info
+      ADD CONSTRAINT chk_card_number_format CHECK (number ~ '^\d{16}$');
+    </sql>
+    <sql>
+      ALTER TABLE card_info
+      ADD CONSTRAINT chk_expiration_date_format CHECK (expiration_date ~ '^(0[1-9]|1[0-2])\/\d{2}$');
+    </sql>
+
+    <rollback>
+      <dropTable tableName="card_info" />
+      <sql>
+        ALTER TABLE card_info
+        DROP CONSTRAINT IF EXISTS chk_card_number_format
+      </sql>
+      <sql>
+        ALTER TABLE card_info
+        DROP CONSTRAINT IF EXISTS chk_expiration_date_format
+      </sql>
+    </rollback>
+  </changeSet>
+</databaseChangeLog>
