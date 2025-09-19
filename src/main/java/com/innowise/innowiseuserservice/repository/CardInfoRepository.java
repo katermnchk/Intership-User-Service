@@ -10,4 +10,5 @@ public interface CardInfoRepository extends JpaRepository<CardInfo, Long> {
 
   List<CardInfo> findAllByIdIn(List<Long> ids);
 
+  boolean existsByUserIdAndNumber(Long id, String number);
 }

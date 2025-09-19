@@ -9,7 +9,6 @@ import com.innowise.innowiseuserservice.exception.CardNotFoundException;
 import com.innowise.innowiseuserservice.exception.DuplicateUserCardException;
 import com.innowise.innowiseuserservice.exception.UserNotFoundException;
 import com.innowise.innowiseuserservice.mapper.CardInfoMapper;
-import com.innowise.innowiseuserservice.mapper.UserMapper;
 import com.innowise.innowiseuserservice.repository.CardInfoRepository;
 import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -24,7 +23,6 @@ public class CardInfoService {
   private final CardInfoRepository cardInfoRepository;
   private final CardInfoMapper cardInfoMapper;
   private final UserRepository userRepository;
-  private final UserMapper userMapper;
 
   public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
     if (cardInfoRepository.existsByUserIdAndNumber(
@@ -63,7 +61,8 @@ public class CardInfoService {
         .orElseThrow(() -> new CardNotFoundException(id));
 
     if (cardInfoRepository.existsByUserIdAndNumber(
-       cardInfo.getUser().getId(), cardInfoUpdateDto.getNumber())
+       cardInfo.getUser().getId(), cardInfoUpdateDto.getNumber()) &&
+        !cardInfoUpdateDto.getNumber().equals(cardInfo.getCardNumber())
     ) {
       throw new DuplicateUserCardException(cardInfoUpdateDto.getNumber());
     }
