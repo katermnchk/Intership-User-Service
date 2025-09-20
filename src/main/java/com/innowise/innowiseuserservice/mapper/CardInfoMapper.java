@@ -14,9 +14,13 @@ public interface CardInfoMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "user", ignore = true)
+  @Mapping(source = "number", target = "cardNumber")
+  @Mapping(source = "holder", target = "cardHolderName")
   CardInfo cardInfoDtoToCardInfo(CardInfoCreationDto cardInfoCreationDto);
 
   @Mapping(target = "userId", expression = "java(cardInfo.getUser().getId())")
+  @Mapping(source = "cardNumber", target = "number")
+  @Mapping(source = "cardHolderName", target = "holder")
   CardInfoResponseDto cardInfoToCardInfoDto(CardInfo cardInfo);
 
   @Mapping(target = "id", ignore = true)

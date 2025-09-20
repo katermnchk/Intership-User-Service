@@ -25,7 +25,7 @@ public class CardInfoService {
   private final UserRepository userRepository;
 
   public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
-    if (cardInfoRepository.existsByUserIdAndNumber(
+    if (cardInfoRepository.existsByUserIdAndCardNumber(
         cardInfoCreationDto.getUserId(), cardInfoCreationDto.getNumber())
     ) {
       throw new DuplicateUserCardException(cardInfoCreationDto.getNumber());
@@ -59,14 +59,17 @@ public class CardInfoService {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
 
-    if (cardInfoRepository.existsByUserIdAndNumber(
-       cardInfo.getUser().getId(), cardInfoUpdateDto.getNumber()) &&
+    if (cardInfoRepository.existsByUserIdAndCardNumber(
+        cardInfo.getUser().getId(), cardInfoUpdateDto.getNumber()) &&
         !cardInfoUpdateDto.getNumber().equals(cardInfo.getCardNumber())
     ) {
       throw new DuplicateUserCardException(cardInfoUpdateDto.getNumber());
     }
 
     cardInfoMapper.updateCardInfoFromCardInfoDto(cardInfoUpdateDto, cardInfo);
+
+    cardInfoRepository.save(cardInfo);
+
     return cardInfoMapper.cardInfoToCardInfoDto(cardInfoRepository.save(cardInfo));
   }
 

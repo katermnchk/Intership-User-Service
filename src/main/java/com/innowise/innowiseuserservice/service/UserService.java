@@ -65,6 +65,9 @@ public class UserService {
         .orElseThrow(() -> new UserNotFoundException(id));
 
     userMapper.updateEntityFromUserDto(userUpdateDto, user);
+
+    userRepository.save(user);
+
     return userMapper.userToUserDto(user);
   }
 
