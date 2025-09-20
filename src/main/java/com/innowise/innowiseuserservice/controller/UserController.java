@@ -1,6 +1,6 @@
 package com.innowise.innowiseuserservice.controller;
 
-import com.innowise.innowiseuserservice.dto.ApiResponse;
+import com.innowise.innowiseuserservice.dto.responsies.ApiResponse;
 import com.innowise.innowiseuserservice.dto.user.UserCreationDto;
 import com.innowise.innowiseuserservice.dto.user.UserResponseDto;
 import com.innowise.innowiseuserservice.dto.user.UserUpdateDto;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping( "/api/v1/users")
+@RequestMapping("${app.api.base-path}/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -63,14 +63,14 @@ public class UserController {
       @PathVariable Long id,
       @RequestBody @Valid UserUpdateDto userUpdateDto
   ) {
-    UserResponseDto userDto = userService.updateUser(id, userUpdateDto);
+    UserResponseDto userDto = userService.updateUserById(id, userUpdateDto);
     return ResponseEntity.
         ok(new ApiResponse<>(200, "User updated successfully", userDto));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
-    userService.deleteUser(id);
+    userService.deleteUserById(id);
     return ResponseEntity.
         ok(new ApiResponse<>(200, "User deleted successfully", null));
   }

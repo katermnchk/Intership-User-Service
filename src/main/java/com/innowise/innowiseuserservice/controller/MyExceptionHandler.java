@@ -1,7 +1,7 @@
 package com.innowise.innowiseuserservice.controller;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.innowise.innowiseuserservice.dto.MyErrorResponse;
+import com.innowise.innowiseuserservice.dto.responsies.MyErrorResponse;
 import com.innowise.innowiseuserservice.exception.CardNotFoundException;
 import com.innowise.innowiseuserservice.exception.DuplicateUserCardException;
 import com.innowise.innowiseuserservice.exception.EmailAlreadyExistsException;

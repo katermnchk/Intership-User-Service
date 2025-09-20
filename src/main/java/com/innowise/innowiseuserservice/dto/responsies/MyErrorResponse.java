@@ -1,5 +1,7 @@
-package com.innowise.innowiseuserservice.dto;
+package com.innowise.innowiseuserservice.dto.responsies;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -7,15 +9,15 @@ import lombok.Getter;
 
 @Getter
 public class MyErrorResponse {
-  final private List<String> message;
-  final private String timestamp;
-  final private int status;
-  final private String error;
+  private final List<String> message;
+  private final OffsetDateTime timestamp;
+  private final int status;
+  private final String error;
 
   public MyErrorResponse(int status, List<String> message, String error) {
     this.status = status;
     this.message = message;
-    this.timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    this.timestamp = OffsetDateTime.now(ZoneOffset.UTC);
     this.error = error;
   }
 
