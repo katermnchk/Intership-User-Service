@@ -60,8 +60,7 @@ public class UserService {
     return userMapper.userToUserDto(user);
   }
 
-  @Transactional
-  public UserResponseDto updateUser(Long id, UserUpdateDto userUpdateDto) {
+  public UserResponseDto updateUserById(Long id, UserUpdateDto userUpdateDto) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new UserNotFoundException(id));
 
@@ -69,8 +68,7 @@ public class UserService {
     return userMapper.userToUserDto(user);
   }
 
-  @Transactional
-  public void deleteUser(Long id) {
+  public void deleteUserById(Long id) {
     if (!userRepository.existsById(id)) {
       throw new UserNotFoundException(id);
     }

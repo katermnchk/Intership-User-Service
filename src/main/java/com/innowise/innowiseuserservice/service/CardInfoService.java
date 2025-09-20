@@ -54,8 +54,7 @@ public class CardInfoService {
         .toList();
   }
 
-  @Transactional
-  public CardInfoResponseDto updateCard(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
+  public CardInfoResponseDto updateCardById(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
 
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
@@ -71,7 +70,6 @@ public class CardInfoService {
     return cardInfoMapper.cardInfoToCardInfoDto(cardInfoRepository.save(cardInfo));
   }
 
-  @Transactional
   public void deleteCardById(Long id) {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
