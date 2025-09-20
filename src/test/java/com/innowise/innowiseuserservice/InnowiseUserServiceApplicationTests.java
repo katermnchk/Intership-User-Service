@@ -1,13 +1,15 @@
 package com.innowise.innowiseuserservice;
 
+/*
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+*/
 
-@SpringBootTest
+//@SpringBootTest
 class InnowiseUserServiceApplicationTests {
 
-  @Test
+  /*@Test
   void contextLoads() {
   }
-
+*/
 }

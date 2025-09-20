@@ -1,6 +1,6 @@
 package com.innowise.innowiseuserservice.controller;
 
-import com.innowise.innowiseuserservice.dto.ApiResponse;
+import com.innowise.innowiseuserservice.dto.responsies.ApiResponse;
 import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoCreationDto;
 import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoResponseDto;
 import com.innowise.innowiseuserservice.dto.cardInfo.CardInfoUpdateDto;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping("/api/v1/cards")
+@RequestMapping("${app.api.base-path}/cards")
 @RequiredArgsConstructor
 public class CardInfoController {
 
@@ -44,7 +44,7 @@ public class CardInfoController {
         ok(new ApiResponse<>(200, "Card fetched successfully", cardDto));
   }
 
-  @GetMapping("/ids")
+  @GetMapping
   public ResponseEntity<ApiResponse<List<CardInfoResponseDto>>> getCardsByIds(@RequestParam List<Long> ids) {
     List<CardInfoResponseDto> cards = cardInfoService.getCardsByIds(ids);
     return ResponseEntity.
@@ -54,9 +54,9 @@ public class CardInfoController {
   @PatchMapping("/{id}")
   public ResponseEntity<ApiResponse<CardInfoResponseDto>> updateCard(
       @PathVariable Long id,
-      @RequestParam @Valid CardInfoUpdateDto cardInfoUpdateDto
+      @RequestBody @Valid CardInfoUpdateDto cardInfoUpdateDto
   ) {
-    CardInfoResponseDto cardDto = cardInfoService.updateCard(id, cardInfoUpdateDto);
+    CardInfoResponseDto cardDto = cardInfoService.updateCardById(id, cardInfoUpdateDto);
     return ResponseEntity.
         ok(new ApiResponse<>(200, "Card updated successfully", cardDto));
   }
