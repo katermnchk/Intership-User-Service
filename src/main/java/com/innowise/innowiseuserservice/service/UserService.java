@@ -11,29 +11,28 @@ import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements IUserService {
 
   private final UserRepository userRepository;
   private final UserMapper userMapper;
 
+  @Override
   public UserResponseDto createUser(UserCreationDto userCreationDto) {
-    User user;
-    try {
-      user = userRepository.save(userMapper.userDtoToUser(userCreationDto));
-    } catch (DataIntegrityViolationException e) {
-      if (e.getMessage().contains("email")) {
-        throw new EmailAlreadyExistsException(userCreationDto.getEmail());
-      }
-      throw e;
+    if (userRepository.existsByEmail(userCreationDto.getEmail())) {
+      throw new EmailAlreadyExistsException(userCreationDto.getEmail());
     }
+
+    User user = userMapper.userDtoToUser(userCreationDto);
+    user = userRepository.save(user);
+
     return userMapper.userToUserDto(user);
   }
 
+  @Override
   public UserResponseDto getUserById(Long id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new UserNotFoundException(id));
@@ -41,6 +40,7 @@ public class UserService {
     return userMapper.userToUserDto(user);
   }
 
+  @Override
   public List<UserResponseDto> getUsersByIdIn(List<Long> ids) {
 
     List<User> users = userRepository.findAllByIdIn(ids);
@@ -53,6 +53,7 @@ public class UserService {
         .toList();
   }
 
+  @Override
   public UserResponseDto getUserByEmail(String email) {
     User user = userRepository.findByEmail(email)
         .orElseThrow(() -> new UserNotFoundException(email));
@@ -60,6 +61,8 @@ public class UserService {
     return userMapper.userToUserDto(user);
   }
 
+  @Override
+  @Transactional
   public UserResponseDto updateUserById(Long id, UserUpdateDto userUpdateDto) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new UserNotFoundException(id));
@@ -71,6 +74,8 @@ public class UserService {
     return userMapper.userToUserDto(user);
   }
 
+  @Override
+  @Transactional
   public void deleteUserById(Long id) {
     if (!userRepository.existsById(id)) {
       throw new UserNotFoundException(id);

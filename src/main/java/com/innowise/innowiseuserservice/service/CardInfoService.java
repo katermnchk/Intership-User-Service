@@ -18,12 +18,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class CardInfoService {
+public class CardInfoService implements ICardInfo {
 
   private final CardInfoRepository cardInfoRepository;
   private final CardInfoMapper cardInfoMapper;
   private final UserRepository userRepository;
 
+  @Override
   public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
     if (cardInfoRepository.existsByUserIdAndCardNumber(
         cardInfoCreationDto.getUserId(), cardInfoCreationDto.getNumber())
@@ -41,6 +42,7 @@ public class CardInfoService {
     return cardInfoMapper.cardInfoToCardInfoDto(cardInfo);
   }
 
+  @Override
   public CardInfoResponseDto getCardById(Long id) {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
@@ -48,12 +50,15 @@ public class CardInfoService {
     return cardInfoMapper.cardInfoToCardInfoDto(cardInfo);
   }
 
+  @Override
   public List<CardInfoResponseDto> getCardsByIds(List<Long> ids) {
     return cardInfoRepository.findAllByIdIn(ids).stream()
         .map(cardInfoMapper::cardInfoToCardInfoDto)
         .toList();
   }
 
+  @Override
+  @Transactional
   public CardInfoResponseDto updateCardById(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
 
     CardInfo cardInfo = cardInfoRepository.findById(id)
@@ -68,11 +73,13 @@ public class CardInfoService {
 
     cardInfoMapper.updateCardInfoFromCardInfoDto(cardInfoUpdateDto, cardInfo);
 
-    cardInfoRepository.save(cardInfo);
+    CardInfo updatedCard = cardInfoRepository.save(cardInfo);
 
-    return cardInfoMapper.cardInfoToCardInfoDto(cardInfoRepository.save(cardInfo));
+    return cardInfoMapper.cardInfoToCardInfoDto(updatedCard);
   }
 
+  @Override
+  @Transactional
   public void deleteCardById(Long id) {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
