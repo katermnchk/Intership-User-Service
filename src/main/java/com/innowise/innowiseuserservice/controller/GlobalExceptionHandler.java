@@ -12,12 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @ControllerAdvice
-public class MyExceptionHandler {
+public class GlobalExceptionHandler {
 
   @ExceptionHandler({
       CardNotFoundException.class,
@@ -67,8 +69,8 @@ public class MyExceptionHandler {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<MyErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
-    List<String> errors = ex.getConstraintViolations().stream()
+  public ResponseEntity<MyErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
+    List<String> errors = e.getConstraintViolations().stream()
         .map(fieldError -> fieldError.getPropertyPath() + ": " + fieldError.getMessage())
         .toList();
 
@@ -82,6 +84,43 @@ public class MyExceptionHandler {
     );
   }
 
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<MyErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+    List<String> errors = e.getBindingResult().getFieldErrors().stream()
+        .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+        .toList();
+
+    log.info("Validation failed: {} errors", errors.size());
+    errors.forEach(error -> log.debug("Validation error: {}", error));
+
+    return buildErrorResponse (
+        HttpStatus.BAD_REQUEST,
+        errors,
+        "Bad request"
+    );
+  }
+
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<MyErrorResponse> handleAllExceptions(Exception e) {
+    log.error("Unexpected error: {}", e.getMessage(), e);
+    return buildErrorResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        List.of("An unexpected error occurred"),
+        "Internal server error"
+    );
+  }
+
+  @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+  public ResponseEntity<MyErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    log.info("Method argument type mismatch: parameter '{}', value '{}'", e.getName(), e.getValue());
+
+    return buildErrorResponse(
+        HttpStatus.BAD_REQUEST,
+        List.of("Invalid path variable: " + e.getName()),
+        "Bad request"
+    );
+  }
 
   private ResponseEntity<MyErrorResponse>
   buildErrorResponse(HttpStatus status, List<String> messages, String error) {
