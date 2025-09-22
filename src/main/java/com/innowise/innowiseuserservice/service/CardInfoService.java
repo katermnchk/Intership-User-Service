@@ -14,6 +14,7 @@ import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +26,7 @@ public class CardInfoService implements ICardInfo {
   private final UserRepository userRepository;
 
   @Override
+  @CacheEvict(value = "users", key = "#cardInfoCreationDto.userId", beforeInvocation = true)
   public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
     if (cardInfoRepository.existsByUserIdAndCardNumber(
         cardInfoCreationDto.getUserId(), cardInfoCreationDto.getNumber())
@@ -59,6 +61,8 @@ public class CardInfoService implements ICardInfo {
 
   @Override
   @Transactional
+  @CacheEvict(value = "users", key = "#cardInfo.user.id", beforeInvocation = true)
+
   public CardInfoResponseDto updateCardById(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
 
     CardInfo cardInfo = cardInfoRepository.findById(id)
@@ -80,6 +84,7 @@ public class CardInfoService implements ICardInfo {
 
   @Override
   @Transactional
+  @CacheEvict(value = "users", key = "#cardInfo.user.id", beforeInvocation = true)
   public void deleteCardById(Long id) {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
