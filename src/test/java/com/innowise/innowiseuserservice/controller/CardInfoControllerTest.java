@@ -1,5 +1,6 @@
 package com.innowise.innowiseuserservice.controller;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -24,6 +25,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.http.MediaType;
 
@@ -255,22 +257,33 @@ class CardInfoControllerTest extends AbstractIntegrationTest {
   class UpdateCardInfoTests {
 
     private Long cardId;
+    private Long cardId2;
 
     @BeforeEach
-    void initCard() throws Exception {
-      CardInfoCreationDto card = createCardInfoCreationDto("9999888877776666", "Katya Rem", "12/25");
+    void initCards() throws Exception {
+      CardInfoCreationDto card1 = createCardInfoCreationDto(
+          "1111222233334444", "Katya Rem", "12/25");
+      CardInfoCreationDto card2 = createCardInfoCreationDto(
+          "9999888877776666", "Katya Rem", "01/26");
+
       mockMvc.perform(post("/api/v1/cards")
               .contentType(MediaType.APPLICATION_JSON)
-              .content(objectMapper.writeValueAsString(card)))
+              .content(objectMapper.writeValueAsString(card1)))
+          .andExpect(status().isCreated());
+
+      mockMvc.perform(post("/api/v1/cards")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(card2)))
           .andExpect(status().isCreated());
 
       cardId = cardInfoRepository.findAll().get(0).getId();
+      cardId2 = cardInfoRepository.findAll().get(1).getId();
     }
 
     @Test
     void givenValidUpdateDto_whenUpdateCard_thenCardUpdated() throws Exception {
       CardInfoUpdateDto updateDto = createCardInfoUpdateDTO(
-          "9999888877776666", "Katya Updated", "01/27");
+          "1111222233336666", "Katya Updated", "01/27");
 
       mockMvc.perform(patch("/api/v1/cards/{id}", cardId)
               .contentType(MediaType.APPLICATION_JSON)
@@ -295,6 +308,21 @@ class CardInfoControllerTest extends AbstractIntegrationTest {
           .andExpect(jsonPath("$.status").value(404))
           .andExpect(jsonPath("$.message").value("Card with ID 100 not found"))
           .andExpect(jsonPath("$.error").value("Not found"));
+    }
+
+    @Test
+    void givenDuplicateCardNumber_whenUpdateCard_thenConflictError() throws Exception {
+      CardInfoUpdateDto updateDto = createCardInfoUpdateDTO(
+          "1111222233334444", "Katya Updated", "01/27");
+
+      mockMvc.perform(patch("/api/v1/cards/{id}", cardId2)
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(updateDto)))
+          .andExpect(status().isConflict())
+          .andExpect(jsonPath("$.status").value(409))
+          .andExpect(jsonPath("$.message").value(
+              "This user already has card with number 1111222233334444"))
+          .andExpect(jsonPath("$.error").value("Conflict"));
     }
   }
 
@@ -336,5 +364,74 @@ class CardInfoControllerTest extends AbstractIntegrationTest {
     }
   }
 
+  @Nested
+  class CardInfoCacheTests {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    private Long cardId;
+
+    @BeforeEach
+    void initCard() throws Exception {
+      cardInfoRepository.deleteAll();
+      redisTemplate.getConnectionFactory().getConnection().flushAll();
+
+      CardInfoCreationDto card = createCardInfoCreationDto(
+          "5555666677778888", "Katya Rem", "12/25");
+      mockMvc.perform(post("/api/v1/cards")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(card)))
+          .andExpect(status().isCreated());
+
+      cardId = cardInfoRepository.findAll().get(0).getId();
+    }
+
+    @Test
+    void givenCardFetched_whenCreateCard_thenCacheEvicted() throws Exception {
+      CardInfoCreationDto newCard = createCardInfoCreationDto(
+          "6666777788889999", "Katya Rem", "01/26");
+
+      mockMvc.perform(post("/api/v1/cards")
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(newCard)))
+          .andExpect(status().isCreated());
+
+      String redisKey = "users::" + user.getId();
+      String cachedValue = redisTemplate.opsForValue().get(redisKey);
+      assertThat(cachedValue).isNull();
+    }
+
+    @Test
+    void givenCachedCard_whenUpdateCard_thenCacheEvicted() throws Exception {
+      mockMvc.perform(get("/api/v1/cards/{id}", cardId))
+          .andExpect(status().isOk());
+
+      CardInfoUpdateDto updateDto = createCardInfoUpdateDTO(
+          "5555666677778888", "Katya Updated", "01/27");
+
+      mockMvc.perform(patch("/api/v1/cards/{id}", cardId)
+              .contentType(MediaType.APPLICATION_JSON)
+              .content(objectMapper.writeValueAsString(updateDto)))
+          .andExpect(status().isOk());
+
+      String redisKey = "users::" + user.getId();
+      String cachedValue = redisTemplate.opsForValue().get(redisKey);
+      assertThat(cachedValue).isNull();
+    }
+
+    @Test
+    void givenCachedCard_whenDeleteCard_thenCacheEvicted() throws Exception {
+      mockMvc.perform(get("/api/v1/cards/{id}", cardId))
+          .andExpect(status().isOk());
+
+      mockMvc.perform(delete("/api/v1/cards/{id}", cardId))
+          .andExpect(status().isOk());
+
+      String redisKey = "users::" + user.getId();
+      String cachedValue = redisTemplate.opsForValue().get(redisKey);
+      assertThat(cachedValue).isNull();
+    }
+  }
 
 }
