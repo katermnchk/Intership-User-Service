@@ -1,10 +1,11 @@
 package com.innowise.innowiseuserservice.controller;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.innowise.innowiseuserservice.dto.responsies.MyErrorResponse;
+import com.innowise.innowiseuserservice.dto.responsies.ApiErrorResponse;
 import com.innowise.innowiseuserservice.exception.CardNotFoundException;
 import com.innowise.innowiseuserservice.exception.DuplicateUserCardException;
 import com.innowise.innowiseuserservice.exception.EmailAlreadyExistsException;
+import com.innowise.innowiseuserservice.exception.ErrorMessages;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -25,38 +26,38 @@ public class GlobalExceptionHandler {
       CardNotFoundException.class,
       URISyntaxException.class
   })
-  public ResponseEntity<MyErrorResponse> handleEntityNotFoundException(RuntimeException e) {
+  public ResponseEntity<ApiErrorResponse> handleEntityNotFoundException(RuntimeException e) {
     log.warn("Entity not found: {}", e.getMessage(), e);
     return buildErrorResponse(
         HttpStatus.NOT_FOUND,
         List.of(e.getMessage()),
-        "Not found");
+        ErrorMessages.NOT_FOUND);
   }
 
   @ExceptionHandler({
       EmailAlreadyExistsException.class,
       DuplicateUserCardException.class
   })
-  public ResponseEntity<MyErrorResponse> handleEntityAlreadyExistsException(RuntimeException e) {
+  public ResponseEntity<ApiErrorResponse> handleEntityAlreadyExistsException(RuntimeException e) {
     log.warn("Entity already exists: {}", e.getMessage(), e);
 
     return buildErrorResponse(
         HttpStatus.CONFLICT,
         List.of(e.getMessage()),
-        "Conflict"
+        ErrorMessages.CONFLICT
     );
   }
 
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<MyErrorResponse> handleInvalidFormatException(HttpMessageNotReadableException e) {
+  public ResponseEntity<ApiErrorResponse> handleInvalidFormatException(HttpMessageNotReadableException e) {
     Throwable cause = e.getCause();
-    String errorMessage = "Bad request";
+    String errorMessage = ErrorMessages.BAD_REQUEST;
 
     if (cause instanceof InvalidFormatException) {
-      errorMessage = "Incorrect datetime format. Please, use yyyy-MM-dd";
+      errorMessage = ErrorMessages.INVALID_DATE_FORMAT;
       log.info("Invalid format exception: {}", cause.getMessage());
     } else if (e.getMessage() != null && e.getMessage().contains("Required request body is missing")) {
-      errorMessage = "Required request body is missing";
+      errorMessage = ErrorMessages.MISSING_BODY;
       log.info("Missing request body");
     } else {
       log.warn("HttpMessageNotReadableException: {}", e.getMessage(), e);
@@ -65,11 +66,11 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(
         HttpStatus.BAD_REQUEST,
         List.of(errorMessage),
-        "Bad request");
+        ErrorMessages.BAD_REQUEST);
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
-  public ResponseEntity<MyErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
+  public ResponseEntity<ApiErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
     List<String> errors = e.getConstraintViolations().stream()
         .map(fieldError -> fieldError.getPropertyPath() + ": " + fieldError.getMessage())
         .toList();
@@ -80,12 +81,12 @@ public class GlobalExceptionHandler {
     return buildErrorResponse (
         HttpStatus.BAD_REQUEST,
         errors,
-        "Bad request"
+        ErrorMessages.BAD_REQUEST
     );
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<MyErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+  public ResponseEntity<ApiErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
     List<String> errors = e.getBindingResult().getFieldErrors().stream()
         .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
         .toList();
@@ -96,35 +97,35 @@ public class GlobalExceptionHandler {
     return buildErrorResponse (
         HttpStatus.BAD_REQUEST,
         errors,
-        "Bad request"
+        ErrorMessages.BAD_REQUEST
     );
   }
 
 
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<MyErrorResponse> handleAllExceptions(Exception e) {
+  public ResponseEntity<ApiErrorResponse> handleAllExceptions(Exception e) {
     log.error("Unexpected error: {}", e.getMessage(), e);
     return buildErrorResponse(
         HttpStatus.INTERNAL_SERVER_ERROR,
-        List.of("An unexpected error occurred"),
-        "Internal server error"
+        List.of(ErrorMessages.UNEXPECTED_ERROR),
+        ErrorMessages.UNEXPECTED_ERROR
     );
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-  public ResponseEntity<MyErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+  public ResponseEntity<ApiErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
     log.info("Method argument type mismatch: parameter '{}', value '{}'", e.getName(), e.getValue());
 
     return buildErrorResponse(
         HttpStatus.BAD_REQUEST,
-        List.of("Invalid path variable: " + e.getName()),
-        "Bad request"
+        List.of(ErrorMessages.INVALID_PATH_VARIABLE + e.getName()),
+        ErrorMessages.INVALID_PATH_VARIABLE
     );
   }
 
-  private ResponseEntity<MyErrorResponse>
+  private ResponseEntity<ApiErrorResponse>
   buildErrorResponse(HttpStatus status, List<String> messages, String error) {
-    MyErrorResponse errorResponse = new MyErrorResponse(status.value(), messages, error);
+    ApiErrorResponse errorResponse = new ApiErrorResponse(status.value(), messages, error);
     return new ResponseEntity<>(errorResponse, status);
   }
 }

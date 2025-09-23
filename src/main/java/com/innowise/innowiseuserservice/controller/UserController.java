@@ -35,28 +35,28 @@ public class UserController {
     UserResponseDto userDto = userService.createUser(userCreationDto);
     return ResponseEntity.
         status(HttpStatus.CREATED).
-        body(new ApiResponse<>(201, "User created successfully", userDto));
+        body(new ApiResponse<>(HttpStatus.CREATED.value(), "User created successfully", userDto));
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
     UserResponseDto userDto = userService.getUserById(id);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "User fetched successfully", userDto));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "User fetched successfully", userDto));
   }
 
   @GetMapping("/email")
   public ResponseEntity<ApiResponse<UserResponseDto>> getUserByEmail(@RequestParam String email) {
     UserResponseDto userDto = userService.getUserByEmail(email);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "User fetched successfully", userDto));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "User fetched successfully", userDto));
   }
 
   @GetMapping("/ids")
   public ResponseEntity<ApiResponse<List<UserResponseDto>>> getUsersByIds(@RequestParam List<Long> ids) {
     List<UserResponseDto> users = userService.getUsersByIdIn(ids);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "Users fetched successfully", users));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "Users fetched successfully", users));
   }
 
   @PatchMapping("/{id}")
@@ -66,14 +66,14 @@ public class UserController {
   ) {
     UserResponseDto userDto = userService.updateUserById(id, userUpdateDto);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "User updated successfully", userDto));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "User updated successfully", userDto));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
     userService.deleteUserById(id);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "User deleted successfully", null));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "User deleted successfully", null));
   }
 
 }
