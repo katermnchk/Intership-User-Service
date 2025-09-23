@@ -6,6 +6,7 @@ import com.innowise.innowiseuserservice.exception.CardNotFoundException;
 import com.innowise.innowiseuserservice.exception.DuplicateUserCardException;
 import com.innowise.innowiseuserservice.exception.EmailAlreadyExistsException;
 import com.innowise.innowiseuserservice.exception.ErrorMessages;
+import com.innowise.innowiseuserservice.exception.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -24,6 +25,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler({
       CardNotFoundException.class,
+      UserNotFoundException.class,
       URISyntaxException.class
   })
   public ResponseEntity<ApiErrorResponse> handleEntityNotFoundException(RuntimeException e) {
