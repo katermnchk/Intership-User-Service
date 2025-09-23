@@ -1,6 +1,7 @@
 package com.innowise.innowiseuserservice.service;
 
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -27,6 +28,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 @ExtendWith(MockitoExtension.class)
 class CardInfoServiceTest {
@@ -38,6 +41,12 @@ class CardInfoServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private CacheManager cacheManager;
+
+  @Mock
+  private Cache cache;
 
   @InjectMocks
   private CardInfoService cardInfoService;
@@ -55,6 +64,8 @@ class CardInfoServiceTest {
     card.setId(1L);
     card.setCardNumber("1111-2222-3333-4444");
     card.setUser(user);
+
+    lenient().when(cacheManager.getCache("users")).thenReturn(cache);
   }
 
   @Test
