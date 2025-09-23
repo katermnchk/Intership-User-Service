@@ -13,7 +13,9 @@ import com.innowise.innowiseuserservice.repository.CardInfoRepository;
 import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,7 @@ public class CardInfoService implements ICardInfo {
   private final CardInfoRepository cardInfoRepository;
   private final CardInfoMapper cardInfoMapper;
   private final UserRepository userRepository;
+  private final CacheManager cacheManager;
 
   @Override
   @CacheEvict(value = "users", key = "#cardInfoCreationDto.userId", beforeInvocation = true)
@@ -61,8 +64,6 @@ public class CardInfoService implements ICardInfo {
 
   @Override
   @Transactional
-  @CacheEvict(value = "users", key = "#cardInfo.user.id", beforeInvocation = true)
-
   public CardInfoResponseDto updateCardById(Long id, CardInfoUpdateDto cardInfoUpdateDto) {
 
     CardInfo cardInfo = cardInfoRepository.findById(id)
@@ -79,17 +80,22 @@ public class CardInfoService implements ICardInfo {
 
     CardInfo updatedCard = cardInfoRepository.save(cardInfo);
 
+    Optional.ofNullable(cacheManager.getCache("users"))
+        .ifPresent(cache -> cache.evict(cardInfo.getUser().getId()));
+
     return cardInfoMapper.cardInfoToCardInfoDto(updatedCard);
   }
 
   @Override
   @Transactional
-  @CacheEvict(value = "users", key = "#cardInfo.user.id", beforeInvocation = true)
   public void deleteCardById(Long id) {
     CardInfo cardInfo = cardInfoRepository.findById(id)
         .orElseThrow(() -> new CardNotFoundException(id));
 
     cardInfoRepository.deleteById(id);
+    Optional.ofNullable(cacheManager.getCache("users"))
+        .ifPresent(cache -> cache.evict(cardInfo.getUser().getId()));
+
   }
 
 }
