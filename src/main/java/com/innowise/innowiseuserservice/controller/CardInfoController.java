@@ -35,21 +35,21 @@ public class CardInfoController {
     CardInfoResponseDto cardDto = cardInfoService.createCard(cardInfoCreationDto);
     return ResponseEntity.
         status(HttpStatus.CREATED).
-        body(new ApiResponse<>(201, "Card created successfully", cardDto));
+        body(new ApiResponse<>(HttpStatus.CREATED.value(), "Card created successfully", cardDto));
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<ApiResponse<CardInfoResponseDto>> getCardById(@PathVariable Long id) {
     CardInfoResponseDto cardDto = cardInfoService.getCardById(id);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "Card fetched successfully", cardDto));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "Card fetched successfully", cardDto));
   }
 
   @GetMapping
   public ResponseEntity<ApiResponse<List<CardInfoResponseDto>>> getCardsByIds(@RequestParam List<Long> ids) {
     List<CardInfoResponseDto> cards = cardInfoService.getCardsByIds(ids);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "Cards fetched successfully", cards));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "Cards fetched successfully", cards));
   }
 
   @PatchMapping("/{id}")
@@ -59,14 +59,14 @@ public class CardInfoController {
   ) {
     CardInfoResponseDto cardDto = cardInfoService.updateCardById(id, cardInfoUpdateDto);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "Card updated successfully", cardDto));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "Card updated successfully", cardDto));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<ApiResponse<Void>> deleteCardInfo(@PathVariable Long id) {
     cardInfoService.deleteCardById(id);
     return ResponseEntity.
-        ok(new ApiResponse<>(200, "Card deleted successfully", null));
+        ok(new ApiResponse<>(HttpStatus.OK.value(), "Card deleted successfully", null));
   }
 
 }
