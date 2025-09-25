@@ -11,6 +11,9 @@ import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,6 +36,7 @@ public class UserService implements IUserService {
   }
 
   @Override
+  @Cacheable(value = "users", key = "#id")
   public UserResponseDto getUserById(Long id) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new UserNotFoundException(id));
@@ -63,6 +67,7 @@ public class UserService implements IUserService {
 
   @Override
   @Transactional
+  @CachePut(value = "users", key = "#id")
   public UserResponseDto updateUserById(Long id, UserUpdateDto userUpdateDto) {
     User user = userRepository.findById(id)
         .orElseThrow(() -> new UserNotFoundException(id));
@@ -76,6 +81,7 @@ public class UserService implements IUserService {
 
   @Override
   @Transactional
+  @CacheEvict(value = "users", key = "#id")
   public void deleteUserById(Long id) {
     if (!userRepository.existsById(id)) {
       throw new UserNotFoundException(id);

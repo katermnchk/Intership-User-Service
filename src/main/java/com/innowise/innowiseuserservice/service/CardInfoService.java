@@ -13,7 +13,10 @@ import com.innowise.innowiseuserservice.repository.CardInfoRepository;
 import com.innowise.innowiseuserservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,8 +26,10 @@ public class CardInfoService implements ICardInfo {
   private final CardInfoRepository cardInfoRepository;
   private final CardInfoMapper cardInfoMapper;
   private final UserRepository userRepository;
+  private final CacheManager cacheManager;
 
   @Override
+  @CacheEvict(value = "users", key = "#cardInfoCreationDto.userId", beforeInvocation = true)
   public CardInfoResponseDto createCard(CardInfoCreationDto cardInfoCreationDto) {
     if (cardInfoRepository.existsByUserIdAndCardNumber(
         cardInfoCreationDto.getUserId(), cardInfoCreationDto.getNumber())
@@ -75,6 +80,9 @@ public class CardInfoService implements ICardInfo {
 
     CardInfo updatedCard = cardInfoRepository.save(cardInfo);
 
+    Optional.ofNullable(cacheManager.getCache("users"))
+        .ifPresent(cache -> cache.evict(cardInfo.getUser().getId()));
+
     return cardInfoMapper.cardInfoToCardInfoDto(updatedCard);
   }
 
@@ -85,6 +93,9 @@ public class CardInfoService implements ICardInfo {
         .orElseThrow(() -> new CardNotFoundException(id));
 
     cardInfoRepository.deleteById(id);
+    Optional.ofNullable(cacheManager.getCache("users"))
+        .ifPresent(cache -> cache.evict(cardInfo.getUser().getId()));
+
   }
 
 }
