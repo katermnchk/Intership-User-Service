@@ -12,8 +12,9 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 @Configuration
 public class RedisConfig {
+
   @Bean
-  public RedisCacheConfiguration cacheConfiguration() {
+  public ObjectMapper objectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -23,13 +24,21 @@ public class RedisConfig {
         ObjectMapper.DefaultTyping.NON_FINAL
     );
 
-    GenericJackson2JsonRedisSerializer serializer =
-        new GenericJackson2JsonRedisSerializer(objectMapper);
+    return objectMapper;
+  }
+
+  @Bean
+  public GenericJackson2JsonRedisSerializer redisSerializer(ObjectMapper objectMapper) {
+    return new GenericJackson2JsonRedisSerializer(objectMapper);
+  }
+
+  @Bean
+  public RedisCacheConfiguration cacheConfiguration(GenericJackson2JsonRedisSerializer redisSerializer) {
 
     return RedisCacheConfiguration.defaultCacheConfig()
         .entryTtl(Duration.ofHours(24))
         .serializeValuesWith(
-            RedisSerializationContext.SerializationPair.fromSerializer(serializer)
+            RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer)
         );
   }
 
