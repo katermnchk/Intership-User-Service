@@ -8,6 +8,7 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface CardInfoMapper {
@@ -25,7 +26,8 @@ public interface CardInfoMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "user", ignore = true)
-  @BeanMapping(nullValuePropertyMappingStrategy = org.mapstruct.NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(source = "holder", target = "cardHolderName")
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateCardInfoFromCardInfoDto(
       CardInfoUpdateDto cardInfoUpdateDto,
       @MappingTarget CardInfo cardInfo

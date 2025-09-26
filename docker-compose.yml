@@ -1,0 +1,65 @@
+services:
+  postgres_userservice:
+    image: postgres:15
+    container_name: postgres_userservice
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata_userservice:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7
+    container_name: user-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    networks:
+        - app_network
+
+  user-service:
+    image: user-service:latest
+    build: .
+    container_name: innowiseuserservice-user-service
+    depends_on:
+      postgres_userservice:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+
+    networks:
+      - app_network
+
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata_userservice:
+
+networks:
+  app_network:
+    external: true
