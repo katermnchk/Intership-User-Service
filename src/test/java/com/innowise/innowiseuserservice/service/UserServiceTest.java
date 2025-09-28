@@ -1,9 +1,15 @@
 package com.innowise.innowiseuserservice.service;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.testcontainers.shaded.com.google.common.primitives.Longs.asList;
 
@@ -67,10 +73,12 @@ class UserServiceTest {
 
     UserResponseDto result = userService.createUser(creationDto);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(userMapper).userDtoToUser(creationDto);
-    verify(userRepository).save(user);
-    verify(userMapper).userToUserDto(user);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(userMapper).userDtoToUser(creationDto),
+        () -> verify(userRepository).save(user),
+        () -> verify(userMapper).userToUserDto(user)
+    );
   }
 
   @Test
@@ -80,13 +88,13 @@ class UserServiceTest {
 
     when(userRepository.existsByEmail(creationDto.getEmail())).thenReturn(true);
 
-    Assertions.assertThrows(EmailAlreadyExistsException.class,
-        () -> userService.createUser(creationDto));
-
-
-    verify(userRepository).existsByEmail(creationDto.getEmail());
-    Mockito.verifyNoMoreInteractions(userRepository);
-    verifyNoInteractions(userMapper);
+    assertAll(
+        () -> assertThrows(EmailAlreadyExistsException.class,
+            () -> userService.createUser(creationDto)),
+        () -> verify(userRepository).existsByEmail(creationDto.getEmail()),
+        () -> verifyNoMoreInteractions(userRepository),
+        () -> verifyNoInteractions(userMapper)
+    );
   }
 
   @Test
@@ -103,9 +111,11 @@ class UserServiceTest {
 
     UserResponseDto result = userService.getUserById(userId);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(userRepository).findById(userId);
-    verify(userMapper).userToUserDto(user);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(userRepository).findById(userId),
+        () -> verify(userMapper).userToUserDto(user)
+    );
   }
 
   @Test
@@ -114,7 +124,7 @@ class UserServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(UserNotFoundException.class,
+    assertThrows(UserNotFoundException.class,
         () -> userService.getUserById(userId));
   }
 
@@ -145,13 +155,14 @@ class UserServiceTest {
 
     var result = userService.getUsersByIdIn(java.util.Arrays.asList(userId1, userId2));
 
-    Assertions.assertEquals(2, result.size());
-    Assertions.assertTrue(result.contains(dto1));
-    Assertions.assertTrue(result.contains(dto2));
-
-    verify(userRepository, times(2)).findAllByIdIn(anyList());
-    verify(userMapper).userToUserDto(user);
-    verify(userMapper).userToUserDto(user2);
+    assertAll(
+        () -> assertEquals(2, result.size()),
+        () -> assertTrue(result.contains(dto1)),
+        () -> assertTrue(result.contains(dto2)),
+        () -> verify(userRepository, times(2)).findAllByIdIn(anyList()),
+        () -> verify(userMapper).userToUserDto(user),
+        () -> verify(userMapper).userToUserDto(user2)
+    );
   }
 
   @Test
@@ -162,11 +173,12 @@ class UserServiceTest {
     when(userRepository.findAllByIdIn(List.of(invalidId1, invalidId2)))
         .thenReturn(Collections.emptyList());
 
-    Assertions.assertThrows(UserNotFoundException.class,
-        () -> userService.getUsersByIdIn(List.of(invalidId1, invalidId2)));
-
-    verify(userRepository).findAllByIdIn(List.of(invalidId1, invalidId2));
-    verifyNoInteractions(userMapper);
+    assertAll(
+        () -> assertThrows(UserNotFoundException.class,
+            () -> userService.getUsersByIdIn(List.of(invalidId1, invalidId2))),
+        () -> verify(userRepository).findAllByIdIn(List.of(invalidId1, invalidId2)),
+        () -> verifyNoInteractions(userMapper)
+    );
   }
 
 
@@ -183,16 +195,18 @@ class UserServiceTest {
 
     UserResponseDto result = userService.getUserByEmail(email);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(userRepository).findByEmail(email);
-    verify(userMapper).userToUserDto(user);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(userRepository).findByEmail(email),
+        () -> verify(userMapper).userToUserDto(user)
+    );
   }
 
   @Test
   void givenInvalidEmail_whenGetUserByEmail_thenThrowUserNotFoundException() {
     when(userRepository.findByEmail("")).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(UserNotFoundException.class,
+    assertThrows(UserNotFoundException.class,
         () -> userService.getUserByEmail(""));
   }
 
@@ -220,7 +234,7 @@ class UserServiceTest {
     );
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-    Mockito.doAnswer(invocation -> {
+    doAnswer(invocation -> {
       user.setName(updateDto.getName());
       user.setSurname(updateDto.getSurname());
       return null;
@@ -230,11 +244,13 @@ class UserServiceTest {
 
     UserResponseDto result = userService.updateUserById(userId, updateDto);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(userRepository).findById(userId);
-    verify(userMapper).updateEntityFromUserDto(updateDto, user);
-    verify(userRepository).save(user);
-    verify(userMapper).userToUserDto(user);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(userRepository).findById(userId),
+        () -> verify(userMapper).updateEntityFromUserDto(updateDto, user),
+        () -> verify(userRepository).save(user),
+        () -> verify(userMapper).userToUserDto(user)
+    );
   }
 
   @Test
@@ -244,11 +260,12 @@ class UserServiceTest {
 
     when(userRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(UserNotFoundException.class,
-        () -> userService.updateUserById(invalidId, updateDto));
-
-    verify(userRepository).findById(invalidId);
-    verifyNoInteractions(userMapper);
+    assertAll(
+        () -> assertThrows(UserNotFoundException.class,
+            () -> userService.updateUserById(invalidId, updateDto)),
+        () -> verify(userRepository).findById(invalidId),
+        () -> verifyNoInteractions(userMapper)
+    );
   }
 
   @Test
@@ -259,8 +276,10 @@ class UserServiceTest {
 
     userService.deleteUserById(userId);
 
-    verify(userRepository).existsById(userId);
-    verify(userRepository).deleteById(userId);
+    assertAll(
+        () -> verify(userRepository).existsById(userId),
+        () -> verify(userRepository).deleteById(userId)
+    );
   }
 
   @Test
@@ -269,11 +288,12 @@ class UserServiceTest {
 
     when(userRepository.existsById(invalidId)).thenReturn(false);
 
-    Assertions.assertThrows(UserNotFoundException.class,
-        () -> userService.deleteUserById(invalidId));
-
-    verify(userRepository).existsById(invalidId);
-    Mockito.verifyNoMoreInteractions(userRepository);
+    assertAll(
+        () -> assertThrows(UserNotFoundException.class,
+            () -> userService.deleteUserById(invalidId)),
+        () -> verify(userRepository).existsById(invalidId),
+        () -> verifyNoMoreInteractions(userRepository)
+    );
   }
 
 }

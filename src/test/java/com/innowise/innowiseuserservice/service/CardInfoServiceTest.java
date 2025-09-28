@@ -1,5 +1,9 @@
 package com.innowise.innowiseuserservice.service;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -87,11 +91,13 @@ class CardInfoServiceTest {
 
     CardInfoResponseDto result = cardInfoService.createCard(creationDto);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), creationDto.getNumber());
-    verify(userRepository).findById(user.getId());
-    verify(cardInfoRepository).save(card);
-    verify(cardInfoMapper).cardInfoToCardInfoDto(card);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), creationDto.getNumber()),
+        () -> verify(userRepository).findById(user.getId()),
+        () -> verify(cardInfoRepository).save(card),
+        () -> verify(cardInfoMapper).cardInfoToCardInfoDto(card)
+    );
   }
 
   @Test
@@ -103,12 +109,13 @@ class CardInfoServiceTest {
     when(cardInfoRepository.existsByUserIdAndCardNumber(user.getId(), creationDto.getNumber()))
         .thenReturn(true);
 
-    Assertions.assertThrows(DuplicateUserCardException.class,
-        () -> cardInfoService.createCard(creationDto));
-
-    verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), creationDto.getNumber());
-    verifyNoMoreInteractions(cardInfoRepository);
-    verifyNoInteractions(cardInfoMapper);
+    assertAll(
+        () -> assertThrows(DuplicateUserCardException.class,
+            () -> cardInfoService.createCard(creationDto)),
+        () -> verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), creationDto.getNumber()),
+        () -> verifyNoMoreInteractions(cardInfoRepository),
+        () -> verifyNoInteractions(cardInfoMapper)
+    );
   }
 
   @Test
@@ -121,7 +128,7 @@ class CardInfoServiceTest {
         .thenReturn(false);
     when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(UserNotFoundException.class,
+    assertThrows(UserNotFoundException.class,
         () -> cardInfoService.createCard(creationDto));
   }
 
@@ -136,9 +143,11 @@ class CardInfoServiceTest {
     when(cardInfoMapper.cardInfoToCardInfoDto(card)).thenReturn(responseDto);
 
     CardInfoResponseDto result = cardInfoService.getCardById(cardId);
-    Assertions.assertEquals(responseDto, result);
-    verify(cardInfoRepository).findById(cardId);
-    verify(cardInfoMapper).cardInfoToCardInfoDto(card);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(cardInfoRepository).findById(cardId),
+        () -> verify(cardInfoMapper).cardInfoToCardInfoDto(card)
+    );
   }
 
   @Test
@@ -146,7 +155,7 @@ class CardInfoServiceTest {
     Long invalidId = 100L;
 
     when(cardInfoRepository.findById(invalidId)).thenReturn(Optional.empty());
-    Assertions.assertThrows(CardNotFoundException.class,
+    assertThrows(CardNotFoundException.class,
         () -> cardInfoService.getCardById(invalidId));
   }
 
@@ -172,13 +181,14 @@ class CardInfoServiceTest {
 
     var result = cardInfoService.getCardsByIds(List.of(cardId1, cardId2));
 
-    Assertions.assertEquals(2, result.size());
-    Assertions.assertTrue(result.contains(responseDto1));
-    Assertions.assertTrue(result.contains(responseDto2));
-
-    verify(cardInfoRepository).findAllByIdIn(anyList());
-    verify(cardInfoMapper).cardInfoToCardInfoDto(card);
-    verify(cardInfoMapper).cardInfoToCardInfoDto(card2);
+    assertAll(
+        () -> assertEquals(2, result.size()),
+        () -> assertTrue(result.contains(responseDto1)),
+        () -> assertTrue(result.contains(responseDto2)),
+        () -> verify(cardInfoRepository).findAllByIdIn(anyList()),
+        () -> verify(cardInfoMapper).cardInfoToCardInfoDto(card),
+        () -> verify(cardInfoMapper).cardInfoToCardInfoDto(card2)
+    );
   }
 
   @Test
@@ -191,10 +201,11 @@ class CardInfoServiceTest {
 
     List<CardInfoResponseDto> result = cardInfoService.getCardsByIds(List.of(invalidId1, invalidId2));
 
-    Assertions.assertTrue(result.isEmpty());
-
-    verify(cardInfoRepository).findAllByIdIn(List.of(invalidId1, invalidId2));
-    verifyNoInteractions(cardInfoMapper);
+    assertAll(
+        () -> assertTrue(result.isEmpty()),
+        () -> verify(cardInfoRepository).findAllByIdIn(List.of(invalidId1, invalidId2)),
+        () -> verifyNoInteractions(cardInfoMapper)
+    );
   }
 
   @Test
@@ -220,11 +231,13 @@ class CardInfoServiceTest {
 
     CardInfoResponseDto result = cardInfoService.updateCardById(cardId, updateDto);
 
-    Assertions.assertEquals(responseDto, result);
-    verify(cardInfoRepository).findById(cardId);
-    verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), updateDto.getNumber());
-    verify(cardInfoRepository).save(card);
-    verify(cardInfoMapper).cardInfoToCardInfoDto(updatedCard);
+    assertAll(
+        () -> assertEquals(responseDto, result),
+        () -> verify(cardInfoRepository).findById(cardId),
+        () -> verify(cardInfoRepository).existsByUserIdAndCardNumber(user.getId(), updateDto.getNumber()),
+        () -> verify(cardInfoRepository).save(card),
+        () -> verify(cardInfoMapper).cardInfoToCardInfoDto(updatedCard)
+    );
   }
 
   @Test
@@ -235,7 +248,7 @@ class CardInfoServiceTest {
 
     when(cardInfoRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(CardNotFoundException.class,
+    assertThrows(CardNotFoundException.class,
         () -> cardInfoService.updateCardById(invalidId, updateDto));
   }
 
@@ -247,8 +260,10 @@ class CardInfoServiceTest {
 
     cardInfoService.deleteCardById(cardId);
 
-    verify(cardInfoRepository).findById(cardId);
-    verify(cardInfoRepository).deleteById(cardId);
+    assertAll(
+        () -> verify(cardInfoRepository).findById(cardId),
+        () -> verify(cardInfoRepository).deleteById(cardId)
+    );
   }
 
   @Test
@@ -257,7 +272,7 @@ class CardInfoServiceTest {
 
     when(cardInfoRepository.findById(invalidId)).thenReturn(Optional.empty());
 
-    Assertions.assertThrows(CardNotFoundException.class,
+    assertThrows(CardNotFoundException.class,
         () -> cardInfoService.deleteCardById(invalidId));
   }
 }
