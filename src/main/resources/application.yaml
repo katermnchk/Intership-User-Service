@@ -20,4 +20,4 @@ app:
   api:
     base-path: /api/v1
   auth-service:
-    validate-url: ${AUTH_SERVICE_VALIDATE_URL}
+    validate-url: ${AUTH_SERVICE_VALIDATE_URL:http://innowise-auth-service:9090/api/v1/auth/validate}
