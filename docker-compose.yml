@@ -51,6 +51,8 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
 
+      AUTH_SERVICE_VALIDATE_URL: ${AUTH_SERVICE_VALIDATE_URL}
+
     networks:
       - app_network
 
