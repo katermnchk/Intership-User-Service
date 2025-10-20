@@ -45,4 +45,11 @@ public abstract class AbstractIntegrationTest {
   public static final GenericContainer<?> REDIS = new GenericContainer<>(DockerImageName.parse("redis:7.2.4"))
       .withExposedPorts(6379);
 
+  @DynamicPropertySource
+  static void configureProperties(DynamicPropertyRegistry registry) {
+    registry.add("internal.api.secret", () -> "test-secret-key");
+    registry.add("internal.api.header-name", () -> "Internal-Service-Secret");
+    registry.add("app.auth-service.validate-url", () -> "http://localhost:9999/validate");
+  }
+
 }

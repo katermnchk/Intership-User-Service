@@ -21,3 +21,8 @@ app:
     base-path: /api/v1
   auth-service:
     validate-url: ${AUTH_SERVICE_VALIDATE_URL:http://innowise-auth-service:9090/api/v1/auth/validate}
+
+internal:
+  api:
+    header-name: "Internal-Service-Secret"
+    secret: ${INTERNAL_API_SECRET}
