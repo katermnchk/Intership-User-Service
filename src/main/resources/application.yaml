@@ -26,3 +26,6 @@ internal:
   api:
     header-name: "Internal-Service-Secret"
     secret: ${INTERNAL_API_SECRET}
+
+server:
+  port: ${SERVER_PORT:8081}
