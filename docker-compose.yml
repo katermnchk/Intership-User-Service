@@ -44,7 +44,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
 
@@ -54,6 +54,7 @@ services:
       AUTH_SERVICE_VALIDATE_URL: ${AUTH_SERVICE_VALIDATE_URL}
 
       SERVER_PORT: 8081
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
 
     networks:
       - app_network
