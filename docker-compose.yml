@@ -35,7 +35,7 @@ services:
         - app_network
 
   user-service:
-    image: user-service:latest
+    image: user-service:v1
     build: .
     container_name: user-service
     depends_on:
